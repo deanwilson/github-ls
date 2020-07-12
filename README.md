@@ -1,2 +1,7 @@
 # github-ls
-Command line tool for displaying GitHub repo properties
+A command line tool for showing repositories and related data
+
+
+### Author
+
+[Dean Wilson](https://www.unixdaemon.net)

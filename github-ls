@@ -1,0 +1,49 @@
+#!/usr/bin/env ruby
+require 'github_api'
+require 'optparse'
+
+APP_NAME = File.basename $PROGRAM_NAME
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = <<-ENDOFUSAGE
+    #{APP_NAME} queries the given user or organisations repositories
+    and displays information about them.
+
+      $ #{APP_NAME} --user deanwilson
+      ...
+      TODO
+      ...
+  ENDOFUSAGE
+
+  opts.on('-u', '--user USER',
+          'github user to query.') { |user| options[:user] = user || ARGV[0] }
+
+  opts.on_tail('-h', '--help', 'Show this message') do
+    puts opts
+    exit
+  end
+end.parse!
+
+if options[:user].nil?
+  if ARGV[0]
+    options[:user] = ARGV[0]
+  else
+    puts 'Please supply a github username'
+    exit 1
+  end
+end
+
+config = {
+  auto_pagination: true,
+  token:           ENV['GITHUB_TOKEN'],
+  user:            options[:user],
+}
+
+github = Github.new oauth_token: config[:token]
+
+repos = github.repos.list(config)
+
+repos.each do |repo|
+  puts repo.name
+end
