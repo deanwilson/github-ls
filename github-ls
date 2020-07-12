@@ -12,6 +12,27 @@ def display_repos(options, repos)
   end
 end
 
+def repo_file_check(repos, github, options)
+  # returns a hash of two arrays, one of repos that have file, and one of those that do not
+  return {} unless options[:with_file] || options[:without_file]
+
+  file_present = []
+  file_absent  = []
+
+  repos.each do |repo|
+    github_file = nil
+    begin
+      github_file = github.repos.contents.get options[:user], repo.name, options[:with_file]
+    rescue Github::Error::NotFound
+      file_absent << repo
+    else
+      file_present << repo
+    end
+  end
+
+  { 'present': file_present, 'absent': file_absent }
+end
+
 APP_NAME = File.basename $PROGRAM_NAME
 
 options = {
@@ -21,6 +42,8 @@ options = {
   only_archived: false,
   only_forked:   false,
   url_type:      false,
+  with_file:     false,
+  without_file:  false,
 }
 
 OptionParser.new do |opts|
@@ -58,7 +81,15 @@ OptionParser.new do |opts|
           'URL type to display - clone, git, https or html (default)',
           ' * clone is the git clone https url',
           ' * html is the GitHub web page for the repository',
-          ' * ssh is the git clone ssh url') { |s| options[:url_type] = s.nil? ? 'html' : s }
+          ' * ssh is the git clone ssh url',
+          '') { |s| options[:url_type] = s.nil? ? 'html' : s }
+
+  opts.on('--with-file FILE',
+          'display repositories that contain <filename>. Must be an absolute path',
+          '') { |file| options[:with_file] = file }
+  opts.on('--without-file FILE',
+          'display repositories that do not contain <filename>. Must be an absolute path',
+          '') { |file| options[:without_file] = file }
 
   opts.on_tail('-h', '--help', 'Show this message') do
     puts opts
@@ -99,6 +130,10 @@ config = {
 github = Github.new config
 
 repos = github.repos.list(config).to_a
+
+repo_files = repo_file_check(repos, github, options)
+repos = repo_files[:present] if options[:with_file]
+repos = repo_files[:absent]  if options[:without_file]
 
 if options[:url_type]
   repos.each do |repo|
