@@ -62,7 +62,7 @@ end
 
 config = {
   auto_pagination: true,
-  token:           ENV['GITHUB_TOKEN'],
+  oauth_token:     ENV['GITHUB_TOKEN'],
   user:            options[:user],
 }
 
@@ -73,8 +73,7 @@ if enabled_exclusives.length > 1
   exit 1
 end
 
-
-github = Github.new oauth_token: config[:token]
+github = Github.new config
 
 repos = github.repos.list(config).to_a
 
