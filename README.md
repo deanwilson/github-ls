@@ -18,13 +18,23 @@ archived or forks.
     A - 	 2019-12-27T16:53:34Z 	 0 	 deanwilson/deanwilson_pdt
     ... snip ...
 
-This can be piped to command such as `sort` to reoder the output.
+This can be piped to command such as `sort` to reorder the output.
 
     # sort repos by most recently updated
     bundle exec ./github-ls deanwilson --long | sort -nrk 3
 
     # sort repos by open issues
     bundle exec ./github-ls deanwilson --long | sort -nrk 4
+
+### Find repositories containing a filename
+
+Using the `--with-file` and `--without-file` flags you can list the
+repositories that contain or do not contain a given file. I've found this useful
+to spot where I'm not applying my linter settings or do not have a CI system configured
+for a repository.
+
+    bundle exec ./github-ls deanwilson --with-file /.rubocop.yml
+
 
 ### Author
 
