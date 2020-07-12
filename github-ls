@@ -20,6 +20,7 @@ options = {
   long_names:    false,
   only_archived: false,
   only_forked:   false,
+  url_type:      false,
 }
 
 OptionParser.new do |opts|
@@ -53,6 +54,12 @@ OptionParser.new do |opts|
   opts.on('-u', '--user USER',
           'github user to query.') { |user| options[:user] = user || ARGV[0] }
 
+  opts.on('--url [SCHEME]',
+          'URL type to display - clone, git, https or html (default)',
+          ' * clone is the git clone https url',
+          ' * html is the GitHub web page for the repository',
+          ' * ssh is the git clone ssh url') { |s| options[:url_type] = s.nil? ? 'html' : s }
+
   opts.on_tail('-h', '--help', 'Show this message') do
     puts opts
     exit
@@ -68,12 +75,6 @@ if options[:user].nil?
   end
 end
 
-config = {
-  auto_pagination: true,
-  oauth_token:     ENV['GITHUB_TOKEN'],
-  user:            options[:user],
-}
-
 ## do not allow multiple exclusive flags
 enabled_exclusives = options.select { |k, v| k.to_s.start_with? 'only_' and v }.keys
 if enabled_exclusives.length > 1
@@ -81,9 +82,32 @@ if enabled_exclusives.length > 1
   exit 1
 end
 
+if options[:url_type]
+  url_types = %w[clone git html ssh]
+  unless url_types.include? options[:url_type]
+    puts "#{APP_NAME}: invalid url type: '#{options[:url_type]}' must be one of #{url_types.join(', ')}"
+    exit 1
+  end
+end
+
+config = {
+  auto_pagination: true,
+  oauth_token:     ENV['GITHUB_TOKEN'],
+  user:            options[:user],
+}
+
 github = Github.new config
 
 repos = github.repos.list(config).to_a
+
+if options[:url_type]
+  repos.each do |repo|
+    prop_name = "#{options[:url_type]}_url"
+    puts repo.send prop_name
+  end
+
+  exit
+end
 
 if options[:only_archived]
   repos.select! { |r| r.archived }
