@@ -67,7 +67,7 @@ config = {
 }
 
 ## do not allow multiple exclusive flags
-enabled_exclusives = options.select {|k,v| k.to_s.start_with? 'only_' and v }.keys
+enabled_exclusives = options.select { |k, v| k.to_s.start_with? 'only_' and v }.keys
 if enabled_exclusives.length > 1
   puts "#{APP_NAME}: only one 'only_' option can be supplied"
   exit 1
@@ -89,10 +89,8 @@ if options[:only_forked]
   exit
 end
 
-
 # ignore non-source repos by default.
 repos.reject! { |r| r.archived } unless options[:archived]
 repos.reject! { |r| r.fork } unless options[:forked]
-
 
 display_repos(repos)
