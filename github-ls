@@ -2,9 +2,13 @@
 require 'github_api'
 require 'optparse'
 
-def display_repos(repos)
-  repos.each do |repo|
-    puts repo.name
+def display_repos(options, repos)
+  names = repos.map { |r| r.name }
+
+  names = repos.map { |r| "#{options[:user]}/#{r.name}" } if options[:long_names]
+
+  names.each do |name|
+    puts name
   end
 end
 
@@ -13,6 +17,7 @@ APP_NAME = File.basename $PROGRAM_NAME
 options = {
   archived:      false,
   forked:        false,
+  long_names:    false,
   only_archived: false,
   only_forked:   false,
 }
@@ -35,6 +40,9 @@ OptionParser.new do |opts|
 
   opts.on('-f', '--fork',
           'include forked repositories in the output.') { |v| options[:fork] = v }
+
+  opts.on('--long-names',
+          'display long names username/repository_name in the output.') { |v| options[:long_names] = v }
 
   opts.on('--only-archived',
           'only include archived repositories in the output.') { |v| options[:only_archived] = v }
@@ -67,7 +75,7 @@ config = {
 }
 
 ## do not allow multiple exclusive flags
-enabled_exclusives = options.select {|k,v| k.to_s.start_with? 'only_' and v }.keys
+enabled_exclusives = options.select { |k, v| k.to_s.start_with? 'only_' and v }.keys
 if enabled_exclusives.length > 1
   puts "#{APP_NAME}: only one 'only_' option can be supplied"
   exit 1
@@ -79,20 +87,18 @@ repos = github.repos.list(config).to_a
 
 if options[:only_archived]
   repos.select! { |r| r.archived }
-  display_repos(repos)
+  display_repos(options, repos)
   exit
 end
 
 if options[:only_forked]
   repos.select! { |r| r.fork }
-  display_repos(repos)
+  display_repos(options, repos)
   exit
 end
-
 
 # ignore non-source repos by default.
 repos.reject! { |r| r.archived } unless options[:archived]
 repos.reject! { |r| r.fork } unless options[:forked]
 
-
-display_repos(repos)
+display_repos(options, repos)
