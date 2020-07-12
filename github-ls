@@ -3,12 +3,49 @@ require 'github_api'
 require 'optparse'
 
 def display_repos(options, repos)
+  # the routing function for different output modes
+
+  if options[:long_format]
+    display_repos_long(repos)
+  else
+    display_repos_short(options, repos)
+  end
+
+  nil
+end
+
+def display_repos_short(options, repos)
   names = repos.map { |r| r.name }
 
   names = repos.map { |r| "#{options[:user]}/#{r.name}" } if options[:long_names]
 
   names.each do |name|
     puts name
+  end
+end
+
+def display_repos_long(repos)
+  expanded_repos = []
+
+  repos.each do |repo|
+    expanded = []
+    expanded << (repo.archived ? 'A' : '-')
+    expanded << (repo.fork ? 'F' : '-')
+    expanded << "\t"
+
+    expanded << repo.updated_at
+    expanded << "\t"
+
+    expanded << repo.open_issues_count
+    expanded << "\t"
+
+    expanded << repo.full_name
+
+    expanded_repos << expanded
+  end
+
+  expanded_repos.each do |repo|
+    puts repo.join(' ')
   end
 end
 
@@ -38,6 +75,7 @@ APP_NAME = File.basename $PROGRAM_NAME
 options = {
   archived:      false,
   forked:        false,
+  long_format:   false,
   long_names:    false,
   only_archived: false,
   only_forked:   false,
@@ -63,7 +101,10 @@ OptionParser.new do |opts|
           'include archived repositories in the output.') { |v| options[:archived] = v }
 
   opts.on('-f', '--fork',
-          'include forked repositories in the output.') { |v| options[:fork] = v }
+          'include forked repositories in the output.') { |v| options[:forked] = v }
+
+  opts.on('--long',
+          'display more details about each repository') { |v| options[:long_format] = v }
 
   opts.on('--long-names',
           'display long names username/repository_name in the output.') { |v| options[:long_names] = v }
