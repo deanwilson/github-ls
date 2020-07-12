@@ -2,9 +2,19 @@
 require 'github_api'
 require 'optparse'
 
+def display_repos(repos)
+  repos.each do |repo|
+    puts repo.name
+  end
+end
+
 APP_NAME = File.basename $PROGRAM_NAME
 
-options = {}
+options = {
+  archived:      false,
+  only_archived: false,
+}
+
 OptionParser.new do |opts|
   opts.banner = <<-ENDOFUSAGE
     #{APP_NAME} queries the given user or organisations repositories
@@ -13,8 +23,16 @@ OptionParser.new do |opts|
       $ #{APP_NAME} --user deanwilson
       ...
       TODO
+      alexa-skill-registered-domain
+      alexa-skill-webstatuscode
       ...
   ENDOFUSAGE
+
+  opts.on('-a', '--archived',
+          'include archived repositories in the output.') { |v| options[:archived] = v }
+
+  opts.on('--only-archived',
+          'only include archived repositories in the output.') { |v| options[:only_archived] = v }
 
   opts.on('-u', '--user USER',
           'github user to query.') { |user| options[:user] = user || ARGV[0] }
@@ -42,8 +60,15 @@ config = {
 
 github = Github.new oauth_token: config[:token]
 
-repos = github.repos.list(config)
+repos = github.repos.list(config).to_a
 
-repos.each do |repo|
-  puts repo.name
+if options[:only_archived]
+  repos.select! { |r| r.archived }
+  display_repos(repos)
+  exit
 end
+
+# ignore archived repos by default.
+repos.reject! { |r| r.archived } unless options[:archived]
+
+display_repos(repos)

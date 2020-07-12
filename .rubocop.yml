@@ -16,5 +16,8 @@ Metrics/AbcSize:
 Style/FrozenStringLiteralComment:
   Enabled: false
 
+Style/SymbolProc:
+  Enabled: false
+
 Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: 'comma'
