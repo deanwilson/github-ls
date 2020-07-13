@@ -4,7 +4,7 @@ require 'digest'
 require 'github_api'
 require 'optparse'
 
-def display_repos(options, repos)
+def display_repos(repos, options)
   # the routing function for different output modes
 
   if options[:long_format]
@@ -64,12 +64,11 @@ def display_repos_long(options, repos)
 end
 
 def repo_file_check(repos, github, options)
-  # returns a hash of two arrays, one of repos that have file, and one of those that do not
+  # returns a hash of two arrays, one of repos with a file, and one without
   return {} unless options[:with_file] || options[:without_file]
 
   file_present = []
   file_absent  = []
-  file_shas    = {} # repo => sha
 
   repos.each do |repo|
     github_file = nil
@@ -79,7 +78,6 @@ def repo_file_check(repos, github, options)
       file_absent << repo
     else
       file_present << repo
-      # puts "File contents for #{repo.name} == #{github_file[:content]}"
 
       decoded = Base64.decode64(github_file[:content])
       content_sha = Digest::SHA256.hexdigest decoded
@@ -88,7 +86,7 @@ def repo_file_check(repos, github, options)
     end
   end
 
-  { 'present': file_present, 'absent': file_absent, 'hashes': file_shas }
+  { 'present': file_present, 'absent': file_absent }
 end
 
 APP_NAME = File.basename $PROGRAM_NAME
@@ -218,18 +216,12 @@ end
 
 if options[:only_archived]
   repos.select! { |r| r.archived }
-  display_repos(options, repos)
-  exit
-end
-
-if options[:only_forked]
+elsif options[:only_forked]
   repos.select! { |r| r.fork }
-  display_repos(options, repos)
-  exit
+else
+  # ignore non-source repos by default.
+  repos.reject! { |r| r.archived } unless options[:archived]
+  repos.reject! { |r| r.fork }     unless options[:forked]
 end
 
-# ignore non-source repos by default.
-repos.reject! { |r| r.archived } unless options[:archived]
-repos.reject! { |r| r.fork } unless options[:forked]
-
-display_repos(options, repos)
+display_repos(repos, options)
