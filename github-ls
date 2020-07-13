@@ -97,6 +97,13 @@ OptionParser.new do |opts|
       ...
   ENDOFUSAGE
 
+  opts.on('--all', 'enable most things. Including archived repos, forks and long output.',
+          '') do |v|
+    options[:archived]    = v
+    options[:forked]      = v
+    options[:long_format] = v
+  end
+
   opts.on('-a', '--archived',
           'include archived repositories in the output.') { |v| options[:archived] = v }
 
