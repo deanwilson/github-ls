@@ -35,6 +35,14 @@ for a repository.
 
     bundle exec ./github-ls deanwilson --with-file /.rubocop.yml
 
+When using `--with-file` you can also specify `--hash` to display a
+sha256 hash of the content in the output. This can help find repository
+repositories that have inconsistent versions of a file.
+
+    bundle exec ./github-ls deanwilson --with-file /.rubocop.yml --hash --long --all
+    A - 	 2019-10-16T08:58:26Z 	 0 	 deanwilson/puppet-liquidtemplates ae2b3d2760e4287a
+    - - 	 2020-06-22T09:54:55Z 	 1 	 deanwilson/puppet-multi_epp c9029c39d69e42f5688afa
+
 
 ### Author
 

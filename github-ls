@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+require 'base64'
+require 'digest'
 require 'github_api'
 require 'optparse'
 
@@ -6,7 +8,7 @@ def display_repos(options, repos)
   # the routing function for different output modes
 
   if options[:long_format]
-    display_repos_long(repos)
+    display_repos_long(options, repos)
   else
     display_repos_short(options, repos)
   end
@@ -15,16 +17,24 @@ def display_repos(options, repos)
 end
 
 def display_repos_short(options, repos)
-  names = repos.map { |r| r.name }
+  repos.each do |repo|
+    name = []
 
-  names = repos.map { |r| "#{options[:user]}/#{r.name}" } if options[:long_names]
+    if options[:long_names]
+      name << repo.full_name
+    else
+      name << repo.name
+    end
 
-  names.each do |name|
-    puts name
+    if options[:with_file] and options[:show_hash]
+      name << repo['github_ls_hash']
+    end
+
+    puts name.join(' ')
   end
 end
 
-def display_repos_long(repos)
+def display_repos_long(options, repos)
   expanded_repos = []
 
   repos.each do |repo|
@@ -41,6 +51,10 @@ def display_repos_long(repos)
 
     expanded << repo.full_name
 
+    if options[:with_file] and options[:show_hash]
+      expanded << repo['github_ls_hash']
+    end
+
     expanded_repos << expanded
   end
 
@@ -55,6 +69,7 @@ def repo_file_check(repos, github, options)
 
   file_present = []
   file_absent  = []
+  file_shas    = {} # repo => sha
 
   repos.each do |repo|
     github_file = nil
@@ -64,10 +79,16 @@ def repo_file_check(repos, github, options)
       file_absent << repo
     else
       file_present << repo
+      # puts "File contents for #{repo.name} == #{github_file[:content]}"
+
+      decoded = Base64.decode64(github_file[:content])
+      content_sha = Digest::SHA256.hexdigest decoded
+
+      repo['github_ls_hash'] = content_sha
     end
   end
 
-  { 'present': file_present, 'absent': file_absent }
+  { 'present': file_present, 'absent': file_absent, 'hashes': file_shas }
 end
 
 APP_NAME = File.basename $PROGRAM_NAME
@@ -79,6 +100,7 @@ options = {
   long_names:    false,
   only_archived: false,
   only_forked:   false,
+  show_hash:     false,
   url_type:      false,
   with_file:     false,
   without_file:  false,
@@ -109,6 +131,8 @@ OptionParser.new do |opts|
 
   opts.on('-f', '--fork',
           'include forked repositories in the output.') { |v| options[:forked] = v }
+
+  opts.on('--hash', 'show SHA256 hash of the files contents') { |v| options[:show_hash] = v }
 
   opts.on('--long',
           'display more details about each repository') { |v| options[:long_format] = v }
