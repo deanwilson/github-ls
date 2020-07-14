@@ -2,36 +2,39 @@
 require 'base64'
 require 'digest'
 require 'github_api'
+require 'ostruct'
 require 'optparse'
 
 def display_repos(repos, options)
   # the routing function for different output modes
 
-  if options[:long_format]
+  if options.long_format
     display_repos_long(options, repos)
   else
     display_repos_short(options, repos)
   end
-
-  nil
 end
 
 def display_repos_short(options, repos)
+  lines = []
+
   repos.each do |repo|
     name = []
 
-    if options[:long_names]
+    if options.long_names
       name << repo.full_name
     else
       name << repo.name
     end
 
-    if options[:with_file] and options[:show_hash]
+    if options.with_file and options.show_hash
       name << repo['github_ls_hash']
     end
 
-    puts name.join(' ')
+    lines << name.join(' ')
   end
+
+  lines.join("\n")
 end
 
 def display_repos_long(options, repos)
@@ -51,21 +54,19 @@ def display_repos_long(options, repos)
 
     expanded << repo.full_name
 
-    if options[:with_file] and options[:show_hash]
+    if options.with_file and options.show_hash
       expanded << repo['github_ls_hash']
     end
 
-    expanded_repos << expanded
+    expanded_repos << expanded.join(' ')
   end
 
-  expanded_repos.each do |repo|
-    puts repo.join(' ')
-  end
+  expanded_repos.join("\n")
 end
 
 def repo_file_check(repos, github, options)
   # returns a hash of two arrays, one of repos with a file, and one without
-  return {} unless options[:with_file] || options[:without_file]
+  return {} unless options.with_file || options.without_file
 
   file_present = []
   file_absent  = []
@@ -73,7 +74,7 @@ def repo_file_check(repos, github, options)
   repos.each do |repo|
     github_file = nil
     begin
-      github_file = github.repos.contents.get options[:user], repo.name, options[:with_file]
+      github_file = github.repos.contents.get options.user, repo.name, options.with_file
     rescue Github::Error::NotFound
       file_absent << repo
     else
@@ -91,18 +92,18 @@ end
 
 APP_NAME = File.basename $PROGRAM_NAME
 
-options = {
-  archived:      false,
-  forked:        false,
-  long_format:   false,
-  long_names:    false,
-  only_archived: false,
-  only_forked:   false,
-  show_hash:     false,
-  url_type:      false,
-  with_file:     false,
-  without_file:  false,
-}
+options = OpenStruct.new({
+    archived:      false,
+    forked:        false,
+    long_format:   false,
+    long_names:    false,
+    only_archived: false,
+    only_forked:   false,
+    show_hash:     false,
+    url_type:      false,
+    with_file:     false,
+    without_file:  false,
+})
 
 OptionParser.new do |opts|
   opts.banner = <<-ENDOFUSAGE
@@ -119,47 +120,47 @@ OptionParser.new do |opts|
 
   opts.on('--all', 'enable most things. Including archived repos, forks and long output.',
           '') do |v|
-    options[:archived]    = v
-    options[:forked]      = v
-    options[:long_format] = v
+    options.archived    = v
+    options.forked      = v
+    options.long_format = v
   end
 
   opts.on('-a', '--archived',
-          'include archived repositories in the output.') { |v| options[:archived] = v }
+          'include archived repositories in the output.') { |v| options.archived = v }
 
   opts.on('-f', '--fork',
-          'include forked repositories in the output.') { |v| options[:forked] = v }
+          'include forked repositories in the output.') { |v| options.forked = v }
 
-  opts.on('--hash', 'show SHA256 hash of the files contents') { |v| options[:show_hash] = v }
+  opts.on('--hash', 'show SHA256 hash of the files contents') { |v| options.show_hash = v }
 
   opts.on('--long',
-          'display more details about each repository') { |v| options[:long_format] = v }
+          'display more details about each repository') { |v| options.long_format = v }
 
   opts.on('--long-names',
-          'display long names username/repository_name in the output.') { |v| options[:long_names] = v }
+          'display long names username/repository_name in the output.') { |v| options.long_names = v }
 
   opts.on('--only-archived',
-          'only include archived repositories in the output.') { |v| options[:only_archived] = v }
+          'only include archived repositories in the output.') { |v| options.only_archived = v }
 
   opts.on('--only-forked',
-          'only include forked repositories in the output.') { |v| options[:only_forked] = v }
+          'only include forked repositories in the output.') { |v| options.only_forked = v }
 
   opts.on('-u', '--user USER',
-          'github user to query.') { |user| options[:user] = user || ARGV[0] }
+          'github user to query.') { |user| options.user = user || ARGV[0] }
 
   opts.on('--url [SCHEME]',
           'URL type to display - clone, git, https or html (default)',
           ' * clone is the git clone https url',
           ' * html is the GitHub web page for the repository',
           ' * ssh is the git clone ssh url',
-          '') { |s| options[:url_type] = s.nil? ? 'html' : s }
+          '') { |s| options.url_type = s.nil? ? 'html' : s }
 
   opts.on('--with-file FILE',
           'display repositories that contain <filename>. Must be an absolute path',
-          '') { |file| options[:with_file] = file }
+          '') { |file| options.with_file = file }
   opts.on('--without-file FILE',
           'display repositories that do not contain <filename>. Must be an absolute path',
-          '') { |file| options[:without_file] = file }
+          '') { |file| options.without_file = file }
 
   opts.on_tail('-h', '--help', 'Show this message') do
     puts opts
@@ -167,9 +168,9 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-if options[:user].nil?
+if options.user.nil?
   if ARGV[0]
-    options[:user] = ARGV[0]
+    options.user = ARGV[0]
   else
     puts 'Please supply a github username'
     exit 1
@@ -177,16 +178,16 @@ if options[:user].nil?
 end
 
 ## do not allow multiple exclusive flags
-enabled_exclusives = options.select { |k, v| k.to_s.start_with? 'only_' and v }.keys
+enabled_exclusives = options.to_h.select { |k, v| k.to_s.start_with? 'only_' and v }.keys
 if enabled_exclusives.length > 1
   puts "#{APP_NAME}: only one 'only_' option can be supplied"
   exit 1
 end
 
-if options[:url_type]
+if options.url_type
   url_types = %w[clone git html ssh]
-  unless url_types.include? options[:url_type]
-    puts "#{APP_NAME}: invalid url type: '#{options[:url_type]}' must be one of #{url_types.join(', ')}"
+  unless url_types.include? options.url_type
+    puts "#{APP_NAME}: invalid url type: '#{options.url_type}' must be one of #{url_types.join(', ')}"
     exit 1
   end
 end
@@ -194,7 +195,7 @@ end
 config = {
   auto_pagination: true,
   oauth_token:     ENV['GITHUB_TOKEN'],
-  user:            options[:user],
+  user:            options.user,
 }
 
 github = Github.new config
@@ -202,26 +203,26 @@ github = Github.new config
 repos = github.repos.list(config).to_a
 
 repo_files = repo_file_check(repos, github, options)
-repos = repo_files[:present] if options[:with_file]
-repos = repo_files[:absent]  if options[:without_file]
+repos = repo_files[:present] if options.with_file
+repos = repo_files[:absent]  if options.without_file
 
-if options[:url_type]
+if options.url_type
   repos.each do |repo|
-    prop_name = "#{options[:url_type]}_url"
+    prop_name = "#{options.url_type}_url"
     puts repo.send prop_name
   end
 
   exit
 end
 
-if options[:only_archived]
+if options.only_archived
   repos.select! { |r| r.archived }
-elsif options[:only_forked]
+elsif options.only_forked
   repos.select! { |r| r.fork }
 else
   # ignore non-source repos by default.
-  repos.reject! { |r| r.archived } unless options[:archived]
-  repos.reject! { |r| r.fork }     unless options[:forked]
+  repos.reject! { |r| r.archived } unless options.archived
+  repos.reject! { |r| r.fork }     unless options.forked
 end
 
-display_repos(repos, options)
+puts display_repos(repos, options)
