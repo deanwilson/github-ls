@@ -27,7 +27,7 @@ def display_repos_short(options, repos)
       name << repo.name
     end
 
-    if options.with_file and options.show_hash
+    if options.with_file && options.show_hash
       name << repo['github_ls_hash']
     end
 
@@ -54,7 +54,7 @@ def display_repos_long(options, repos)
 
     expanded << repo.full_name
 
-    if options.with_file and options.show_hash
+    if options.with_file && options.show_hash
       expanded << repo['github_ls_hash']
     end
 
