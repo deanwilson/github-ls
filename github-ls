@@ -128,7 +128,7 @@ OptionParser.new do |opts|
   opts.on('-a', '--archived',
           'include archived repositories in the output.') { |v| options.archived = v }
 
-  opts.on('-f', '--fork',
+  opts.on('-f', '--fork', '--forked',
           'include forked repositories in the output.') { |v| options.forked = v }
 
   opts.on('--hash', 'show SHA256 hash of the files contents') { |v| options.show_hash = v }
