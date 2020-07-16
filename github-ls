@@ -64,6 +64,23 @@ def display_repos_long(options, repos)
   expanded_repos.join("\n")
 end
 
+def get_config(options)
+  if options.user.nil?
+    if ARGV[0]
+      options.user = ARGV[0]
+    else
+      puts 'Please supply a github username'
+      exit 1
+    end
+  end
+
+  {
+    auto_pagination: true,
+    oauth_token:     ENV['GITHUB_TOKEN'],
+    user:            options.user,
+  }
+end
+
 def repo_file_check(repos, github, options)
   # returns a hash of two arrays, one of repos with a file, and one without
   return {} unless options.with_file || options.without_file
@@ -168,15 +185,6 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-if options.user.nil?
-  if ARGV[0]
-    options.user = ARGV[0]
-  else
-    puts 'Please supply a github username'
-    exit 1
-  end
-end
-
 ## do not allow multiple exclusive flags
 enabled_exclusives = options.to_h.select { |k, v| k.to_s.start_with? 'only_' and v }.keys
 if enabled_exclusives.length > 1
@@ -192,12 +200,7 @@ if options.url_type
   end
 end
 
-config = {
-  auto_pagination: true,
-  oauth_token:     ENV['GITHUB_TOKEN'],
-  user:            options.user,
-}
-
+config = get_config(options)
 github = Github.new config
 
 repos = github.repos.list(config).to_a
