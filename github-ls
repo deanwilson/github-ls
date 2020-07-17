@@ -18,18 +18,23 @@ end
 def display_repos_short(options, repos)
   lines = []
 
+  longest_name = 0
+  if options.long_names
+    longest_name = repos.map { |r| r.full_name }.max_by(&:length).length
+  else
+    longest_name = repos.map { |r| r.name }.max_by(&:length).length
+  end
+
   repos.each do |repo|
     name = []
 
     if options.long_names
-      name << repo.full_name
+      name << repo.full_name.ljust(longest_name, ' ')
     else
-      name << repo.name
+      name << repo.name.ljust(longest_name, ' ')
     end
 
-    if options.with_file && options.show_hash
-      name << repo['github_ls_hash']
-    end
+    name << repo['github_ls_hash'] if options.with_file && options.show_hash
 
     lines << name.join(' ')
   end
@@ -39,6 +44,8 @@ end
 
 def display_repos_long(options, repos)
   expanded_repos = []
+
+  longest_name = repos.map { |r| r.full_name }.max_by(&:length).length
 
   repos.each do |repo|
     expanded = []
@@ -52,7 +59,8 @@ def display_repos_long(options, repos)
     expanded << repo.open_issues_count
     expanded << "\t"
 
-    expanded << repo.full_name
+    padded_name = repo.full_name.ljust(longest_name, ' ')
+    expanded << padded_name
 
     if options.with_file && options.show_hash
       expanded << repo['github_ls_hash']
@@ -110,17 +118,17 @@ end
 APP_NAME = File.basename $PROGRAM_NAME
 
 options = OpenStruct.new({
-    archived:      false,
-    forked:        false,
-    long_format:   false,
-    long_names:    false,
-    only_archived: false,
-    only_forked:   false,
-    show_hash:     false,
-    url_type:      false,
-    with_file:     false,
-    without_file:  false,
-})
+                           archived:      false,
+                           forked:        false,
+                           long_format:   false,
+                           long_names:    false,
+                           only_archived: false,
+                           only_forked:   false,
+                           show_hash:     false,
+                           url_type:      false,
+                           with_file:     false,
+                           without_file:  false,
+                         })
 
 OptionParser.new do |opts|
   opts.banner = <<-ENDOFUSAGE

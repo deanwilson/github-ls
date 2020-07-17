@@ -3,7 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [0.0.5] - unreleased
 ### Added
-- Keep a changelog
+- Keep a changelog PR#14
+- Add `--forked` option
+- Fix the name output when displaying hashes PR#15
 
 ### Changed
 - Moved the option parsing code from a hash to an ostruct PR#12
