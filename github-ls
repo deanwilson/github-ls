@@ -108,7 +108,7 @@ def repo_file_check(repos, github, options)
       decoded = Base64.decode64(github_file[:content])
       content_sha = Digest::SHA256.hexdigest decoded
 
-      repo['github_ls_hash'] = content_sha
+      repo['github_ls_hash'] = content_sha[0..10] # shorten the hash
     end
   end
 
@@ -236,4 +236,4 @@ else
   repos.reject! { |r| r.fork }     unless options.forked
 end
 
-puts display_repos(repos, options)
+puts display_repos(repos, options) unless repos.empty?
