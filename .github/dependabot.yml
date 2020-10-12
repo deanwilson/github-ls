@@ -10,7 +10,7 @@ updates:
   reviewers:
     - "deanwilson"
 - package-ecosystem: bundler
-  directory: "/trello-bulk"
+  directory: "/"
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
