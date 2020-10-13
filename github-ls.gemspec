@@ -22,6 +22,8 @@ Gem::Specification.new do |spec|
     Not an official GitHub tool.
   END_OF_DESCRIPTION
 
+  spec.required_ruby_version = '>= 2.6.0'
+
   spec.add_dependency             'github_api', '~> 0.18.2'
 
   spec.add_development_dependency 'awesome_print', '~> 1.8.0'
