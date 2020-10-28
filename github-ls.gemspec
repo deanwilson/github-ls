@@ -29,5 +29,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'awesome_print', '~> 1.8.0'
   spec.add_development_dependency 'rake', '~> 13.0.0'
   spec.add_development_dependency 'rubocop', '~> 0.93.1'
-  spec.add_development_dependency 'rubocop-rspec', '~> 1.43.0'
+  spec.add_development_dependency 'rubocop-rspec', '~> 1.44.1'
 end
