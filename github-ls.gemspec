@@ -24,7 +24,7 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '>= 2.6.0'
 
-  spec.add_dependency             'github_api', '~> 0.18.2'
+  spec.add_dependency             'github_api', '>= 0.18.2', '< 0.20.0'
 
   spec.add_development_dependency 'awesome_print', '~> 1.8.0'
   spec.add_development_dependency 'rake', '~> 13.0.0'
